@@ -576,10 +576,10 @@ html.intro .ai-replay{display:none}
     var shift=y-scrollY;
     var fr={left:r.left,top:r.top-shift,width:r.width,height:r.height,right:r.right,bottom:r.bottom-shift};
     var N=curs.length,si=steps.indexOf(s),a=curs[s.who],b=curs[(s.who+1)%N];
-    place(a,fr.left-6,fr.top-6);
+    a.style.transition='transform '+(.65/spd)+'s cubic-bezier(.3,.7,.2,1),opacity .3s';
+    place(a,fr.left-4,fr.top-4);
     if(!inPar){
-      place(b,fr.right+6,fr.bottom+6);
-      for(var q=2;q<N;q++){
+      for(var q=1;q<N;q++){
         var ix=(s.who+q)%N;
         place(curs[ix],innerWidth*(.08+.8*(((si*37+ix*29)%100)/100)),innerHeight*(.6+.22*(((si*53+ix*17)%100)/100)));
       }
@@ -587,7 +587,12 @@ html.intro .ai-replay{display:none}
     useAgent(s.who);
     if(Math.abs(shift)>2)await scrollToY(y,Math.max(280,600*k/spd));else await sleep(250);
     if(done)return;
-    showSel(fr,bi);await sleep(380);
+    /* the cursor drags the box open: top-left corner to bottom-right corner, in step with the box */
+    a.style.transition='transform '+(.3/spd)+'s ease,opacity .3s';
+    showSel(fr,bi);
+    place(a,fr.right-2,Math.min(fr.bottom,innerHeight-8)-2);
+    await sleep(380);
+    if(done)return;
     if(done)return;
     if(s.kind==='wipe'){
       s.items.forEach(function(el){reveal(el,s.dur||700)});
