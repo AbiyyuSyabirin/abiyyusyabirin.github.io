@@ -141,14 +141,20 @@ html.intro .hero [data-ai].ai-show{animation:wipe .7s cubic-bezier(.2,.7,.2,1) b
 .cur span{position:absolute;left:14px;top:16px;background:var(--c);color:var(--t);font:500 11px var(--mono);padding:2px 8px;border-radius:999px;white-space:nowrap}
 #ailog{position:fixed;left:20px;bottom:22px;z-index:60;font:500 12px var(--mono);color:var(--muted);pointer-events:none}
 #ailog::before{content:"> ";color:var(--red-soft)}
+#aicount{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:6px;background:rgba(14,14,19,.92);border:1px solid #3A3A46;border-radius:999px;padding:6px 14px;font:500 12px var(--mono);color:var(--ink);pointer-events:none;white-space:nowrap}
+#aicount i{width:8px;height:8px;border-radius:50%;background:var(--c);opacity:.22;transition:opacity .3s,transform .3s}
+#aicount i.on{opacity:1;transform:scale(1.25)}
+#aicount span{margin-left:6px}
 .ai-skip{position:fixed;right:20px;bottom:16px;z-index:70;background:rgba(14,14,19,.9);color:var(--ink);border:1px solid #3A3A46;border-radius:4px;padding:8px 14px;font:500 12px var(--mono);cursor:pointer}
 .ai-skip:hover{border-color:var(--red);color:#fff}
 .ai-speed{right:124px}
 html.intro .rv{transform:none;transition:none}
 html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
-@media(max-width:700px){#ailog{bottom:66px}}
-#replay{margin-left:14px;color:var(--muted)}
-#replay:hover{color:var(--ink)}
+@media(max-width:700px){#aicount{left:20px;transform:none;bottom:20px}#ailog{bottom:108px}.ai-speed{right:20px;bottom:58px}}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:.9;transform:none}}
+.ai-replay{position:fixed;right:16px;bottom:16px;z-index:70;display:block;background:rgba(14,14,19,.92);color:var(--ink);border:1px solid #3A3A46;border-radius:4px;padding:8px 14px;font:500 12px var(--mono);text-decoration:none;opacity:.9;animation:fadein .5s ease both}
+.ai-replay:hover{border-color:var(--red);color:#fff;opacity:1}
+html.intro .ai-replay{display:none}
 @media(prefers-reduced-motion:reduce){#agents,.ai-skip,#replay{display:none!important}}
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -166,8 +172,12 @@ html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
   <div class="cur" style="--c:#FF2D3D;--t:#fff"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M2 1l13 6-5.5 1.8L8 15z" fill="#FF2D3D" stroke="#07070A"/></svg><span>layout</span></div>
   <div class="cur" style="--c:#F3F3F5;--t:#07070A"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M2 1l13 6-5.5 1.8L8 15z" fill="#F3F3F5" stroke="#07070A"/></svg><span>copy</span></div>
   <div class="cur" style="--c:#4C8DFF;--t:#fff"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M2 1l13 6-5.5 1.8L8 15z" fill="#4C8DFF" stroke="#07070A"/></svg><span>data</span></div>
+  <div class="cur" style="--c:#FFB020;--t:#07070A"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M2 1l13 6-5.5 1.8L8 15z" fill="#FFB020" stroke="#07070A"/></svg><span>visual</span></div>
+  <div class="cur" style="--c:#2ED3A0;--t:#07070A"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M2 1l13 6-5.5 1.8L8 15z" fill="#2ED3A0" stroke="#07070A"/></svg><span>review</span></div>
+  <div id="aicount"><i style="--c:#FF2D3D"></i><i style="--c:#F3F3F5"></i><i style="--c:#4C8DFF"></i><i style="--c:#FFB020"></i><i style="--c:#2ED3A0"></i><span>0 agents used</span></div>
   <div id="ailog"></div>
 </div>
+<a href="?intro=1" id="replay" class="ai-replay">Replay intro</a>
 <button class="ai-skip ai-speed" type="button" id="aispeed">Speed 4×</button>
 <button class="ai-skip" type="button" id="aiskip">Skip intro</button>
 
@@ -369,7 +379,7 @@ html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
 </main>
 
 <footer>
-  <div class="wrap">© 2026 Mochamad Abiyyu Syabirin · Based in Jakarta<a href="?intro=1" id="replay">Replay intro</a></div>
+  <div class="wrap">© 2026 Mochamad Abiyyu Syabirin · Based in Jakarta</div>
 </footer>
 
 <script>
@@ -442,44 +452,64 @@ html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
   var k=innerWidth<700?.85:1, spd=4, done=false, timers=[], CPS=190;
   var stage=document.getElementById('agents'), sel=stage.querySelector('.sel'), dim=sel.querySelector('.dim'), log=document.getElementById('ailog');
   var curs=[].slice.call(stage.querySelectorAll('.cur'));
-  var WHO=['layout','copy','data'];
+  var WHO=['layout','copy','data','visual','review'];
+  var used=[0,0,0,0,0], nUsed=0, cnt=document.getElementById('aicount'), cntTxt=cnt.querySelector('span'), dots=[].slice.call(cnt.querySelectorAll('i'));
+  function useAgent(i){if(used[i])return;used[i]=1;nUsed++;dots[i].classList.add('on');cntTxt.textContent=nUsed+' agent'+(nUsed===1?'':'s')+' used'}
   function G(q,c){return [].slice.call((c||document).querySelectorAll(q))}
   function T(fn,ms){timers.push(setTimeout(fn,ms))}
   function sleep(ms){return new Promise(function(res){T(res,ms/spd)})}
   function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 
   /* the script: who does what, in page order */
-  var steps=[];
+  var steps=[], plan=[], curBr=null;
   function add(who,text,kind,items,o){
     o=o||{};if(!items.length)return;
-    steps.push({who:who,text:text,kind:kind,items:items,box:o.box||items,after:o.after||[],dur:o.dur});
+    var s={who:who,text:text,kind:kind,items:items,box:o.box||items,after:o.after||[],dur:o.dur};
+    steps.push(s);(curBr||plan).push(s);
+  }
+  /* left and right columns are worked on at the same time by different agents */
+  function par(text,fns){
+    var br=fns.map(function(){return []});
+    fns.forEach(function(fn,i){curBr=br[i];fn()});
+    curBr=null;
+    br=br.filter(function(b){return b.length});
+    if(br.length>1)plan.push({par:br,text:text});else br.forEach(function(b){b.forEach(function(s){plan.push(s)})});
   }
   add(0,'placing the intro tag','wipe',G('.hero .tag'),{dur:700});
-  add(0,'drawing the title','wipe',G('.hero .mega'),{dur:1400});
-  add(1,'writing the headline','type',G('.hero-grid h1'));
-  add(1,'writing the intro paragraph','type',G('.hero-grid p'));
+  add(3,'drawing the title','wipe',G('.hero .mega'),{dur:1400});
+  par('copy + review agents: headline and intro paragraph, side by side',[
+    function(){add(1,'writing the headline','type',G('.hero-grid h1'))},
+    function(){add(4,'writing the intro paragraph','type',G('.hero-grid p'))}
+  ]);
   add(0,'adding the buttons','seq',G('.hero .actions .btn'),{box:G('.hero .actions')});
   add(0,'opening the about section','type',G('#about .sec-head, #about h2'));
-  G('#about .about>div:first-child p').forEach(function(p,i,all){add(1,'writing background paragraph '+(i+1)+'/'+all.length,'type',[p])});
-  add(2,'adding education and certificates','seq',G('#about .facts li'),{box:G('#about .facts')});
-  add(0,'starting the projects grid','type',G('#projects .sec-head, #projects h2, #projects .sub'));
+  par('copy + data agents: background text and facts, side by side',[
+    function(){G('#about .about>div:first-child p').forEach(function(p,i,all){add(1,'writing background paragraph '+(i+1)+'/'+all.length,'type',[p])})},
+    function(){add(2,'adding education and certificates','seq',G('#about .facts li'),{box:G('#about .facts')})}
+  ]);
+  add(4,'starting the projects grid','type',G('#projects .sec-head, #projects h2, #projects .sub'));
   G('#projects .project').forEach(function(p,i,all){
     var tag='project '+(i+1)+'/'+all.length, fig=p.querySelector('figure.shot'), txt=fig?fig.nextElementSibling:p;
-    if(fig){
-      if(fig.classList.contains('flow'))add(2,'drawing the flow for '+tag,'flow',[fig].concat(G('li',fig)),{box:[fig]});
-      else add(2,'placing the screenshot for '+tag,'wipe',[fig],{dur:1200});
-    }
-    add(2,'writing the title for '+tag,'type',G('.year, h3',txt));
-    var ps=G('p:not(.year)',txt), chips=G('.stack li',txt);
-    ps.forEach(function(el,j){
-      var last=j===ps.length-1;
-      add(1,'writing the description for '+tag,'type',[el],last?{after:chips,box:[el].concat(chips)}:{});
-    });
+    par('visual + copy agents: building '+tag+' side by side',[
+      function(){
+        if(!fig)return;
+        if(fig.classList.contains('flow'))add(3,'drawing the flow for '+tag,'flow',[fig].concat(G('li',fig)),{box:[fig]});
+        else add(3,'placing the screenshot for '+tag,'wipe',[fig],{dur:1200});
+      },
+      function(){
+        add(0,'writing the title for '+tag,'type',G('.year, h3',txt));
+        var ps=G('p:not(.year)',txt), chips=G('.stack li',txt);
+        ps.forEach(function(el,j){
+          var last=j===ps.length-1;
+          add(1,'writing the description for '+tag,'type',[el],last?{after:chips,box:[el].concat(chips)}:{});
+        });
+      }
+    ]);
   });
   add(1,'writing the contact section','type',G('#contact h2'));
-  add(1,'adding the email address','type',G('#contact .mail'));
-  add(0,'adding contact buttons','seq',G('#contact .actions .btn'),{box:G('#contact .actions')});
-  add(0,'finishing the footer','wipe',G('footer .wrap'),{dur:600});
+  add(2,'adding the email address','type',G('#contact .mail'));
+  add(4,'adding contact buttons','seq',G('#contact .actions .btn'),{box:G('#contact .actions')});
+  add(4,'finishing the footer','wipe',G('footer .wrap'),{dur:600});
   steps.forEach(function(s){s.items.concat(s.after).forEach(function(el){el.setAttribute('data-ai','')})});
   G('.rv').forEach(function(el){el.classList.add('in')});
 
@@ -490,7 +520,10 @@ html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
     els.forEach(function(el){var q=el.getBoundingClientRect();l=Math.min(l,q.left);t=Math.min(t,q.top);r=Math.max(r,q.right);b=Math.max(b,q.bottom)});
     return {left:l,top:t,width:r-l,height:b-t,right:r,bottom:b};
   }
-  function showSel(r){
+  var sels=[sel], dims=[dim];
+  (function(){var c=sel.cloneNode(true);sel.parentNode.appendChild(c);sels.push(c);dims.push(c.querySelector('.dim'))})();
+  function showSel(r,i){
+    i=i||0;var sel=sels[i],dim=dims[i];
     var top=Math.max(r.top,62),bot=Math.min(r.top+r.height,innerHeight-8),h=Math.max(0,bot-top);
     sel.style.transition='none';
     sel.style.left=r.left+'px';sel.style.top=top+'px';sel.style.width='0px';sel.style.height='0px';sel.style.opacity='1';
@@ -499,7 +532,7 @@ html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
     sel.style.width=r.width+'px';sel.style.height=h+'px';
     dim.textContent=Math.round(r.width)+' × '+Math.round(r.height);
   }
-  function hideSel(){sel.style.transition='opacity .15s';sel.style.opacity='0'}
+  function hideSel(i){var s=sels[i||0];s.style.transition='opacity .15s';s.style.opacity='0'}
   function scrollToY(y,ms){
     return new Promise(function(res){
       var y0=scrollY,dy=y-y0;
@@ -534,20 +567,27 @@ html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
     });
   }
 
-  async function runStep(s){
-    log.textContent=WHO[s.who]+' agent: '+s.text;
+  async function runStep(s,P){
+    var inPar=!!P, bi=P?P.bi:0;
+    if(!inPar)log.textContent=WHO[s.who]+' agent: '+s.text;
     var r=union(s.box), vh=innerHeight, maxY=document.documentElement.scrollHeight-vh;
     var y=scrollY;
-    if(r.top<90||r.bottom>vh-60)y=clamp(r.top+scrollY-Math.max(90,(vh-r.height)/2),0,maxY);
+    if(!inPar&&(r.top<90||r.bottom>vh-60))y=clamp(r.top+scrollY-Math.max(90,(vh-r.height)/2),0,maxY);
     var shift=y-scrollY;
     var fr={left:r.left,top:r.top-shift,width:r.width,height:r.height,right:r.right,bottom:r.bottom-shift};
-    var a=curs[s.who],b=curs[(s.who+1)%3],c=curs[(s.who+2)%3];
+    var N=curs.length,si=steps.indexOf(s),a=curs[s.who],b=curs[(s.who+1)%N];
     place(a,fr.left-6,fr.top-6);
-    place(b,fr.right+6,fr.bottom+6);
-    place(c,innerWidth*(.15+.7*(((steps.indexOf(s)*37)%10)/10)),innerHeight*.78);
+    if(!inPar){
+      place(b,fr.right+6,fr.bottom+6);
+      for(var q=2;q<N;q++){
+        var ix=(s.who+q)%N;
+        place(curs[ix],innerWidth*(.08+.8*(((si*37+ix*29)%100)/100)),innerHeight*(.6+.22*(((si*53+ix*17)%100)/100)));
+      }
+    }
+    useAgent(s.who);
     if(Math.abs(shift)>2)await scrollToY(y,Math.max(280,600*k/spd));else await sleep(250);
     if(done)return;
-    showSel(fr);await sleep(380);
+    showSel(fr,bi);await sleep(380);
     if(done)return;
     if(s.kind==='wipe'){
       s.items.forEach(function(el){reveal(el,s.dur||700)});
@@ -562,7 +602,23 @@ html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
     }
     for(var z=0;z<s.after.length&&!done;z++){reveal(s.after[z],300);await sleep(170)}
     await sleep(320);
-    hideSel();
+    hideSel(bi);
+  }
+  /* two agents, two columns, same moment */
+  async function runPar(p){
+    log.textContent=p.text;
+    var all=[];p.par.forEach(function(br){br.forEach(function(s){all=all.concat(s.box)})});
+    var r=union(all), vh=innerHeight, maxY=document.documentElement.scrollHeight-vh, y=scrollY;
+    if(r.top<90||r.bottom>vh-60)y=clamp(r.top+scrollY-Math.max(90,(vh-r.height)/2),0,maxY);
+    var N=curs.length;
+    for(var ix=0;ix<N;ix++)place(curs[ix],innerWidth*(.08+.8*((ix*29%100)/100)),innerHeight*.85);
+    if(Math.abs(y-scrollY)>2)await scrollToY(y,Math.max(280,600*k/spd));else await sleep(250);
+    if(done)return;
+    await Promise.all(p.par.map(function(br,bi){
+      return (async function(){for(var i=0;i<br.length&&!done;i++){await runStep(br[i],{bi:bi})}})();
+    }));
+    if(done)return;
+    await sleep(200);
   }
 
   function finish(toTop){
@@ -580,7 +636,7 @@ html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
     if(toTop)scrollTo({top:0,behavior:'instant'});
   }
   async function main(){
-    for(var i=0;i<steps.length&&!done;i++){await runStep(steps[i])}
+    for(var i=0;i<plan.length&&!done;i++){var it=plan[i];if(it.par)await runPar(it);else await runStep(it)}
     if(done)return;
     curs.forEach(function(c){c.style.opacity='0'});
     log.textContent='done. you can scroll now.';
@@ -590,7 +646,7 @@ html.intro [data-ai].ai-show{animation:wipe .6s cubic-bezier(.2,.7,.2,1) both}
   function begin(){
     if(done)return;
     scrollTo({top:0,behavior:'instant'});
-    curs.forEach(function(c,i){place(c,innerWidth*(.3+.2*i),innerHeight*.55);c.style.opacity='1'});
+    curs.forEach(function(c,i){place(c,innerWidth*(.12+.18*i),innerHeight*(.5+.05*(i%2)));c.style.opacity='1'});
     T(function(){main().catch(bail)},400);
   }
   document.getElementById('aiskip').addEventListener('click',function(){finish(true)});
